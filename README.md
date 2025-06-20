@@ -34,3 +34,29 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Deploy on GitHub Pages
+
+This project is configured for automatic deployment to GitHub Pages using GitHub Actions.
+
+### Setup Instructions:
+
+1. **Enable GitHub Pages:**
+   - Go to your repository settings
+   - Navigate to "Pages" section
+   - Under "Source", select "GitHub Actions"
+
+2. **Automatic Deployment:**
+   - Push your code to the `main` branch
+   - The GitHub Action will automatically build and deploy your app
+   - Your site will be available at: `https://yourusername.github.io/soletrasolver/`
+
+3. **Manual Deployment (if needed):**
+   ```bash
+   npm run deploy
+   ```
+
+### Configuration:
+- The app is configured for static export with GitHub Pages optimization
+- Images are unoptimized for static hosting
+- Base path is set to `/soletrasolver/` for GitHub Pages subfolder deployment

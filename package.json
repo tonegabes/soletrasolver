@@ -5,10 +5,14 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:compress": "next build && npm run compress:dict",
+    "compress:dict": "node scripts/compress-dictionary.js",
+    "deploy:check": "node scripts/deploy-production.js",
     "start": "next start",
     "lint": "next lint",
     "export": "next build",
-    "deploy": "npm run export && npx gh-pages -d out"
+    "deploy": "npm run build:compress && npm run deploy:check && npx gh-pages -d out",
+    "analyze": "cross-env ANALYZE=true npm run build"
   },
   "dependencies": {
     "lucide-react": "^0.518.0",
@@ -22,6 +26,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
     "gh-pages": "^6.3.0",

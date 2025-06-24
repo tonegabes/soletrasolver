@@ -24,12 +24,100 @@ export default function Home() {
   useEffect(() => {
     const carregarDicionario = async () => {
       try {
-        const response = await fetch('/dicionario.txt');
+        setLoading(true);
+        console.log('Carregando dicionário...');
+
+        // First, try to load chunked dictionary
+        try {
+          const chunkedDict = await loadChunkedDictionary();
+          if (chunkedDict.length > 0) {
+            setDicionario(chunkedDict);
+            console.log(`Dicionário em chunks carregado: ${chunkedDict.length} palavras`);
+            return;
+          }
+        } catch {
+          console.log('Chunks não disponíveis, tentando arquivo único...');
+        }
+
+        // Try multiple possible paths due to deployment configuration
+        const possiblePaths = [
+          '/dicionario.txt',
+          `${process.env.NODE_ENV === 'production' ? '/soletrasolver' : ''}/dicionario.txt`,
+          './dicionario.txt'
+        ];
+
+        let response = null;
+
+        for (const path of possiblePaths) {
+          try {
+            console.log(`Tentando carregar: ${path}`);
+            response = await fetch(path);
+            if (response.ok) {
+              console.log(`Sucesso ao carregar: ${path}`);
+              break;
+            }
+          } catch (pathError) {
+            console.warn(`Erro ao carregar ${path}:`, pathError);
+            continue;
+          }
+        }
+
+        if (!response || !response.ok) {
+          throw new Error(`Falha ao carregar dicionário. Status: ${response?.status || 'unknown'}`);
+        }
+
+        // Check if the response is actually text
+        const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
+        console.log('Response size:', response.headers.get('content-length'));
+
         const text = await response.text();
-        const palavras = text.split('\n').map(palavra => palavra.trim()).filter(palavra => palavra.length > 0);
+        console.log('Texto carregado, tamanho:', text.length);
+
+        if (text.length < 100) {
+          console.error('Arquivo muito pequeno, possível erro:', text);
+          throw new Error('Arquivo de dicionário parece estar truncado ou corrompido');
+        }
+
+        // Process the text with better splitting logic
+        const palavras = text
+          .split(/[\n\r]+/)
+          .map(palavra => palavra.trim())
+          .filter(palavra => palavra.length > 0 && !palavra.startsWith('#'))
+          .filter(palavra => /^[a-záéíóúâêîôûãõç-]+$/i.test(palavra)); // Only valid Portuguese words
+
+        console.log(`Palavras processadas: ${palavras.length}`);
+
+        if (palavras.length < 1000) {
+          console.warn('Número suspeito de palavras carregadas:', palavras.length);
+          console.log('Primeiras 10 palavras:', palavras.slice(0, 10));
+        }
+
         setDicionario(palavras);
+
       } catch (error) {
         console.error('Erro ao carregar dicionário:', error);
+
+        // Fallback: try to load a smaller backup dictionary
+        try {
+          console.log('Tentando carregar dicionário de backup...');
+          const backupResponse = await fetch('/dicionario_backup.txt');
+          if (backupResponse.ok) {
+            const backupText = await backupResponse.text();
+            const palavrasBackup = backupText
+              .split(/[\n\r]+/)
+              .map(palavra => palavra.trim())
+              .filter(palavra => palavra.length > 0);
+
+            setDicionario(palavrasBackup);
+            console.log(`Dicionário de backup carregado: ${palavrasBackup.length} palavras`);
+          } else {
+            throw new Error('Backup também falhou');
+          }
+        } catch (backupError) {
+          console.error('Falha no backup:', backupError);
+          alert('Erro ao carregar dicionário. Por favor, recarregue a página.');
+        }
       } finally {
         setLoading(false);
       }
@@ -37,6 +125,37 @@ export default function Home() {
 
     carregarDicionario();
   }, []);
+
+  // Function to load chunked dictionary
+  const loadChunkedDictionary = async (): Promise<string[]> => {
+    const basePath = process.env.NODE_ENV === 'production' ? '/soletrasolver' : '';
+
+    // Try to load the index file
+    const indexResponse = await fetch(`${basePath}/dicionario-index.json`);
+    if (!indexResponse.ok) {
+      throw new Error('Índice de chunks não encontrado');
+    }
+
+    const index = await indexResponse.json();
+    console.log(`Carregando ${index.chunks} chunks...`);
+
+    const allWords: string[] = [];
+
+    // Load all chunks in parallel for better performance
+    const chunkPromises = [];
+    for (let i = 0; i < index.chunks; i++) {
+      chunkPromises.push(
+        fetch(`${basePath}/dicionario-chunk-${i}.txt`)
+          .then(response => response.text())
+          .then(text => text.split(/[\n\r]+/).map(palavra => palavra.trim()).filter(palavra => palavra.length > 0))
+      );
+    }
+
+    const chunks = await Promise.all(chunkPromises);
+    chunks.forEach(chunk => allWords.push(...chunk));
+
+    return allWords;
+  };
 
   // Algoritmo de busca
   const buscarPalavras = () => {

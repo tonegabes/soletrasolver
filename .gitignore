@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Compressed dictionary chunks (these are generated during build)
+/public/dicionario-chunk-*.txt
+/public/dicionario-index.json

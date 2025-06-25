@@ -12,6 +12,7 @@
     "dict:add": "node scripts/add-word.js add",
     "dict:import": "node scripts/add-word.js import",
     "dict:stats": "node scripts/add-word.js stats",
+    "dict:list": "node scripts/add-word.js list",
     "start": "next start",
     "lint": "next lint",
     "export": "next build",

@@ -230,12 +230,62 @@ class WordManager {
    */
   async importFromFile(filePath) {
     try {
-      if (!fs.existsSync(filePath)) {
+      // Resolve path relative to current working directory
+      const resolvedPath = path.resolve(filePath);
+
+      console.log(`🔍 Procurando arquivo: ${filePath}`);
+      console.log(`📍 Caminho completo: ${resolvedPath}`);
+
+      // Check if file exists with different possible paths
+      const possiblePaths = [
+        filePath, // As provided
+        path.resolve(filePath), // Absolute path
+        path.join(process.cwd(), filePath), // Relative to current directory
+        path.join(__dirname, "..", filePath), // Relative to project root
+        path.join(__dirname, filePath), // Relative to scripts folder
+      ];
+
+      let foundPath = null;
+      for (const testPath of possiblePaths) {
+        if (fs.existsSync(testPath)) {
+          foundPath = testPath;
+          console.log(`✅ Arquivo encontrado em: ${testPath}`);
+          break;
+        }
+      }
+
+      if (!foundPath) {
         console.error(`❌ Arquivo não encontrado: ${filePath}`);
+        console.log("📂 Caminhos tentados:");
+        possiblePaths.forEach((p) => console.log(`   • ${p}`));
+        console.log("📁 Diretório atual:", process.cwd());
+        console.log("📂 Arquivos .txt disponíveis:");
+
+        // List available .txt files in current directory
+        try {
+          const txtFiles = fs
+            .readdirSync(process.cwd())
+            .filter((file) => file.endsWith(".txt"));
+          if (txtFiles.length > 0) {
+            txtFiles.forEach((file) => console.log(`   📄 ${file}`));
+          } else {
+            console.log("   Nenhum arquivo .txt encontrado no diretório atual");
+          }
+        } catch (listError) {
+          console.log("   Erro ao listar arquivos");
+        }
+
         return;
       }
 
-      const content = fs.readFileSync(filePath, "utf8");
+      const content = fs.readFileSync(foundPath, "utf8");
+
+      // Show file info
+      const stats = fs.statSync(foundPath);
+      console.log(
+        `📊 Tamanho do arquivo: ${(stats.size / 1024).toFixed(1)} KB`
+      );
+
       const palavras = content
         .split(/[\n\r,;]+/)
         .map((p) => p.trim())
@@ -243,13 +293,20 @@ class WordManager {
 
       if (palavras.length === 0) {
         console.warn("⚠️  Nenhuma palavra encontrada no arquivo");
+        console.log(
+          "💡 Verifique se o arquivo contém palavras separadas por linhas, vírgulas ou ponto e vírgula"
+        );
         return;
       }
 
-      console.log(`📁 Importando ${palavras.length} palavras de: ${filePath}`);
+      console.log(`📁 Importando ${palavras.length} palavras de: ${foundPath}`);
       await this.addMultipleWords(palavras);
     } catch (error) {
       console.error(`❌ Erro ao ler arquivo: ${error.message}`);
+      console.log("💡 Verifique se:");
+      console.log("   • O arquivo existe no caminho especificado");
+      console.log("   • Você tem permissão para ler o arquivo");
+      console.log("   • O arquivo não está aberto em outro programa");
     }
   }
 
@@ -300,6 +357,57 @@ class WordManager {
         console.log(`   ${letra}: ${count.toLocaleString()} (${percentage}%)`);
       });
   }
+
+  /**
+   * Lista arquivos .txt disponíveis para import
+   */
+  listAvailableFiles() {
+    console.log("📂 Arquivos .txt disponíveis para import:");
+    console.log("─────────────────────────────────────────");
+    console.log(`📍 Diretório atual: ${process.cwd()}`);
+    console.log();
+
+    const directories = [
+      { path: process.cwd(), name: "Diretório atual" },
+      { path: path.join(__dirname), name: "Pasta scripts" },
+      { path: path.join(__dirname, ".."), name: "Raiz do projeto" },
+      { path: path.join(__dirname, "..", "public"), name: "Pasta public" },
+    ];
+
+    directories.forEach((dir) => {
+      if (fs.existsSync(dir.path)) {
+        try {
+          const txtFiles = fs
+            .readdirSync(dir.path)
+            .filter((file) => file.endsWith(".txt"))
+            .filter((file) => file !== "dicionario.txt"); // Exclude main dictionary
+
+          console.log(`📁 ${dir.name} (${dir.path}):`);
+          if (txtFiles.length > 0) {
+            txtFiles.forEach((file) => {
+              const fullPath = path.join(dir.path, file);
+              const stats = fs.statSync(fullPath);
+              const size =
+                stats.size < 1024
+                  ? `${stats.size}B`
+                  : `${(stats.size / 1024).toFixed(1)}KB`;
+              console.log(`   📄 ${file} (${size})`);
+            });
+          } else {
+            console.log("   Nenhum arquivo .txt encontrado");
+          }
+          console.log();
+        } catch (error) {
+          console.log(`   Erro ao acessar diretório: ${error.message}`);
+          console.log();
+        }
+      }
+    });
+
+    console.log("💡 Para importar um arquivo, use:");
+    console.log("   npm run add-word import <caminho-do-arquivo>");
+    console.log("   npm run dict:import <caminho-do-arquivo>");
+  }
 }
 
 // Função principal
@@ -339,6 +447,11 @@ async function main() {
       manager.showStats();
       break;
 
+    case "list":
+    case "listar":
+      manager.listAvailableFiles();
+      break;
+
     case "help":
     case "ajuda":
       console.log("🔤 Script para gerenciar palavras do dicionário");
@@ -355,12 +468,16 @@ async function main() {
         "   npm run add-word stats              # Mostrar estatísticas"
       );
       console.log(
+        "   npm run add-word list               # Listar arquivos .txt disponíveis"
+      );
+      console.log(
         "   npm run add-word help               # Mostrar esta ajuda"
       );
       console.log("");
       console.log("💡 Exemplos:");
       console.log('   npm run add-word add "programação"');
       console.log("   npm run add-word import palavras.txt");
+      console.log("   npm run add-word list");
       break;
 
     default:

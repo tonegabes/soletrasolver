@@ -36,6 +36,115 @@ Um aplicativo Next.js para encontrar palavras do dicionário com base em letras 
 - `npm run deploy:check` - Verificação pré-deployment
 - `npm run deploy` - Deploy completo para GitHub Pages
 
+## 🔤 Gerenciamento de Palavras
+
+### Scripts para Adicionar Palavras
+
+#### **Modo Interativo**
+```bash
+npm run add-word
+```
+Interface interativa para adicionar palavras uma por vez.
+
+#### **Adicionar Palavra Única**
+```bash
+npm run add-word add "programação"
+npm run dict:add "javascript"
+```
+
+#### **Importar de Arquivo**
+```bash
+npm run add-word import palavras.txt
+npm run dict:import exemplo.txt
+```
+
+#### **Estatísticas do Dicionário**
+```bash
+npm run add-word stats
+npm run dict:stats
+```
+
+### **Funcionalidades do Gerenciador de Palavras**
+
+#### ✅ **Validação Automática**
+- Verifica caracteres válidos (português + hífen)
+- Impede palavras vazias ou muito curtas
+- Remove espaços e normaliza formato
+- Previne hífens no início/fim
+
+#### ✅ **Segurança**
+- Backup automático antes de modificações
+- Detecção de duplicatas
+- Validação de arquivos de import
+- Histórico de modificações com timestamp
+
+#### ✅ **Organização**
+- Ordenação alfabética automática
+- Remoção de duplicatas
+- Limpeza de caracteres inválidos
+- Estatísticas detalhadas
+
+### **Exemplos de Uso**
+
+#### **1. Adicionar palavras interativamente:**
+```bash
+$ npm run add-word
+🔤 Modo interativo - Adicionar palavras ao dicionário
+💡 Digite uma palavra por linha, ou "sair" para terminar
+📝 Palavra: programação
+✅ Palavra "programação" adicionada com sucesso!
+📝 Palavra: sair
+👋 Encerrando...
+```
+
+#### **2. Importar lista de palavras:**
+```bash
+$ npm run add-word import scripts/example-words.txt
+📁 Importando 20 palavras de: scripts/example-words.txt
+✅ Adicionada: "programação"
+✅ Adicionada: "javascript"
+⚠️  Palavra "código" já existe
+...
+🎉 Resumo:
+   • 18 palavras adicionadas
+   • 2 palavras rejeitadas
+   • Total no dicionário: 539164
+```
+
+#### **3. Ver estatísticas:**
+```bash
+$ npm run dict:stats
+📊 Estatísticas do Dicionário
+─────────────────────────────
+📖 Total de palavras: 539,146
+
+🔢 Por tamanho:
+   3 letras: 1,234 (0.2%)
+   4 letras: 5,678 (1.1%)
+   5 letras: 12,345 (2.3%)
+   ...
+
+🔤 Por primeira letra (top 10):
+   A: 45,123 (8.4%)
+   C: 42,567 (7.9%)
+   ...
+```
+
+### **Formato de Arquivo para Import**
+
+O script aceita arquivos de texto com palavras separadas por:
+- Quebras de linha
+- Vírgulas
+- Ponto e vírgula
+
+Exemplo de arquivo `novas-palavras.txt`:
+```
+programação
+javascript, typescript
+react; nextjs
+desenvolvimento
+```
+
 ## 📊 Resultados das Otimizações
 
 ### Antes
@@ -65,6 +174,12 @@ npm run deploy:check
 
 # Deploy completo para GitHub Pages
 npm run deploy
+
+# Gerenciamento de palavras
+npm run add-word              # Modo interativo
+npm run dict:add <palavra>    # Adicionar palavra
+npm run dict:import <arquivo> # Importar arquivo
+npm run dict:stats            # Estatísticas
 
 # Build simples (sem otimizações)
 npm run build
@@ -112,6 +227,7 @@ Para debugar problemas de carregamento, abra o console do navegador e procure po
 - Filtro por quantidade de letras
 - Interface responsiva e moderna
 - Mais de 500 mil palavras do dicionário português
+- **Gerenciamento fácil de palavras via linha de comando**
 
 ## 🚀 Como Usar
 

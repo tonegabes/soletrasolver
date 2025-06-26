@@ -11204,6 +11204,7 @@ mutreteiro
 mutua
 mutual
 mutualidade
+mutualmente
 mutualístico
 mutuamente
 mutuar
@@ -49997,4 +49998,3 @@ periplasmódio
 periplasto
 peripleroma
 peripleromático
-peripleurite
